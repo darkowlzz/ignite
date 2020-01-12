@@ -1,7 +1,9 @@
 package run
 
 import (
+	"bytes"
 	"fmt"
+	"text/template"
 
 	api "github.com/weaveworks/ignite/pkg/apis/ignite"
 	"github.com/weaveworks/ignite/pkg/filter"
@@ -12,6 +14,7 @@ import (
 type PsFlags struct {
 	All    bool
 	Filter string
+	Format string
 }
 
 type psOptions struct {
@@ -36,10 +39,8 @@ func Ps(po *psOptions) error {
 			return err
 		}
 	}
-	o := util.NewOutput()
-	defer o.Flush()
 
-	o.Write("VM ID", "IMAGE", "KERNEL", "SIZE", "CPUS", "MEMORY", "CREATED", "STATUS", "IPS", "PORTS", "NAME")
+	filteredVMs := []*api.VM{}
 	for _, vm := range po.allVMs {
 		isExpectedVM := true
 		if filtering {
@@ -52,10 +53,36 @@ func Ps(po *psOptions) error {
 			return err
 		}
 		if isExpectedVM {
-			o.Write(vm.GetUID(), vm.Spec.Image.OCI, vm.Spec.Kernel.OCI,
-				vm.Spec.DiskSize, vm.Spec.CPUs, vm.Spec.Memory, formatCreated(vm), formatStatus(vm), vm.Status.IPAddresses,
-				vm.Spec.Network.Ports, vm.GetName())
+			filteredVMs = append(filteredVMs, vm)
 		}
+	}
+
+	if po.PsFlags.Format != "" {
+		// Parse the template format.
+		tmpl, err := template.New("").Parse(po.PsFlags.Format)
+		if err != nil {
+			return fmt.Errorf("failed to parse template: %v", err)
+		}
+
+		// Render the template with the filtered VMs.
+		for _, vm := range filteredVMs {
+			o := &bytes.Buffer{}
+			if err := tmpl.Execute(o, vm); err != nil {
+				return fmt.Errorf("failed rendering template: %v", err)
+			}
+			fmt.Println(o.String())
+		}
+		return nil
+	}
+
+	o := util.NewOutput()
+	defer o.Flush()
+
+	o.Write("VM ID", "IMAGE", "KERNEL", "SIZE", "CPUS", "MEMORY", "CREATED", "STATUS", "IPS", "PORTS", "NAME")
+	for _, vm := range filteredVMs {
+		o.Write(vm.GetUID(), vm.Spec.Image.OCI, vm.Spec.Kernel.OCI,
+			vm.Spec.DiskSize, vm.Spec.CPUs, vm.Spec.Memory, formatCreated(vm), formatStatus(vm), vm.Status.IPAddresses,
+			vm.Spec.Network.Ports, vm.GetName())
 	}
 	return nil
 }
