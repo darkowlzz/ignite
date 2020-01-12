@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"text/template"
 
 	"github.com/weaveworks/gitops-toolkit/pkg/filter"
 	"github.com/weaveworks/gitops-toolkit/pkg/runtime"
@@ -14,6 +15,7 @@ import (
 
 type InspectFlags struct {
 	OutputFormat string
+	Format       string
 }
 
 type inspectOptions struct {
@@ -47,6 +49,20 @@ func (i *InspectFlags) NewInspectOptions(k, objectMatch string) (*inspectOptions
 func Inspect(io *inspectOptions) error {
 	var b []byte
 	var err error
+
+	if io.Format != "" {
+		// Render Go template.
+		output := &bytes.Buffer{}
+		tmpl, err := template.New("").Parse(io.Format)
+		if err != nil {
+			return fmt.Errorf("failed to parse template: %v", err)
+		}
+		if err := tmpl.Execute(output, io.object); err != nil {
+			return fmt.Errorf("failed rendering template: %v", err)
+		}
+		fmt.Println(output.String())
+		return nil
+	}
 
 	// Select the encoder and encode the object with it
 	switch io.OutputFormat {
