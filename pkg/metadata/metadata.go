@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strings"
 
 	"github.com/weaveworks/gitops-toolkit/pkg/filter"
 	"github.com/weaveworks/gitops-toolkit/pkg/runtime"
@@ -42,6 +43,21 @@ func SetNameAndUID(obj runtime.Object, c *client.Client) error {
 
 	// Generate or validate the given name, if any
 	return processName(obj, c)
+}
+
+// SetLabels metadata labels of a given object.
+func SetLabels(labels []string, obj runtime.Object) error {
+	kvLabels := map[string]string{}
+	for _, label := range labels {
+		kv := strings.Split(label, "=")
+		// Check length of key/val. Should not be more than 2.
+		if len(kv) > 2 {
+			return fmt.Errorf("invalid label value %q: supported syntax: --label <key>=<value>", label)
+		}
+		kvLabels[kv[0]] = kv[1]
+		obj.SetLabel(kv[0], kv[1])
+	}
+	return nil
 }
 
 // processUID a new 8-byte ID and handles directory creation/deletion
