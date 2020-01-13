@@ -133,14 +133,21 @@ func processName(obj runtime.Object, c *client.Client) error {
 }
 
 func verifyUIDOrName(c *client.Client, match string, kind runtime.Kind) error {
-	_, err := c.Dynamic(kind).Find(filter.NewIDNameFilter(match))
+	obj, err := c.Dynamic(kind).Find(filter.NewIDNameFilter(match))
 	switch err.(type) {
 	case *filterer.NonexistentError:
 		// The id/name is unique, no error
 		return nil
-	case nil, *filterer.AmbiguousError:
+	case *filterer.AmbiguousError:
 		// The ambiguous error can only occur if someone manually created two Objects with the same name
 		return fmt.Errorf("invalid %s id/name %q: already exists", kind, match)
+	case nil:
+		// Since Find() uses a filter, when a match is found, check if the
+		// matched object exactly matches with the given id/name.
+		if obj.GetName() == match || string(obj.GetUID()) == match {
+			return fmt.Errorf("invalid %s id/name %q already exists", kind, match)
+		}
+		return nil
 	default:
 		return err
 	}
