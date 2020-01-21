@@ -19,7 +19,8 @@ import (
 	"github.com/weaveworks/ignite/pkg/util"
 )
 
-const blockSize = 4096 // Block size to use for the ext4 filesystems, this is the default
+const blockSize = 4096      // Block size to use for the ext4 filesystems, this is the default
+const minBaseSize = 1024000 // Minimum size of base image file.
 
 // CreateImageFilesystem creates an ext4 filesystem in a file, containing the files from the source
 func CreateImageFilesystem(img *api.Image, src source.Source) error {
@@ -34,7 +35,15 @@ func CreateImageFilesystem(img *api.Image, src source.Source) error {
 	// To accommodate space for the tar file contents and the ext4 journal + other metadata,
 	// make the base image a sparse file three times the size of the source contents. This
 	// will be shrunk to fit by resizeToMinimum later.
-	if err := imageFile.Truncate(int64(img.Status.OCISource.Size.Bytes()) * 3); err != nil {
+	var baseSize int64
+	// If the image size is too small, use minimum base size.
+	if int64(img.Status.OCISource.Size.Bytes()) < int64(minBaseSize) {
+		log.Debugf("Image size too small (%v). Using default base image size of 1 MB", img.Status.OCISource.Size)
+		baseSize = int64(minBaseSize)
+	} else {
+		baseSize = int64(img.Status.OCISource.Size.Bytes())
+	}
+	if err := imageFile.Truncate(baseSize * 3); err != nil {
 		return errors.Wrapf(err, "failed to allocate space for image %s", img.GetUID())
 	}
 
@@ -106,7 +115,15 @@ func setupResolvConf(tempDir string) error {
 		return nil
 	}
 
-	return os.Symlink("../proc/net/pnp", resolvConf)
+	// For images made from scratch, this file doesn't exists.
+	if err := os.Symlink("../proc/net/pnp", resolvConf); err != nil {
+		if os.IsNotExist(err) {
+			log.Warnf("warning: could not setup resolv.conf: %v", err)
+		} else {
+			return err
+		}
+	}
+	return nil
 }
 
 // resizeToMinimum resizes the given image to the smallest size possible
