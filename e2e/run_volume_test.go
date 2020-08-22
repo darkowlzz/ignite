@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"gotest.tools/assert"
+
+	"github.com/weaveworks/ignite/e2e/util/ignite"
 )
 
 // runVolume is a helper for testing volume persistence
@@ -68,98 +70,44 @@ func runVolume(t *testing.T, vmName, runtime, networkPlugin string) {
 	}()
 
 	// Run a vm with the loop-device mounted as a volume @ /my-vol
-	runCmd := exec.Command(
-		igniteBin,
-		"--runtime="+runtime,
-		"--network-plugin="+networkPlugin,
-		"--volumes="+loopPath+":/my-vol",
-		"run", "--name="+vmName,
-		"weaveworks/ignite-ubuntu",
-		"--ssh",
+	i := ignite.NewIgnite(
+		ignite.WithTest(t),
+		ignite.WithBinary(igniteBin),
+		ignite.WithVMName(vmName),
+		ignite.WithRuntime(runtime),
+		ignite.WithNetworkPlugin(networkPlugin),
+		ignite.WithRunArg("--ssh"),
+		ignite.WithRunArg("--volumes="+loopPath+":/my-vol"),
 	)
-	runOut, runErr := runCmd.CombinedOutput()
 
-	defer func() {
-		rmvCmd := exec.Command(
-			igniteBin,
-			"--runtime="+runtime,
-			"--network-plugin="+networkPlugin,
-			"rm", "-f", vmName,
-		)
-		rmvOut, rmvErr := rmvCmd.CombinedOutput()
-		assert.Check(t, rmvErr, fmt.Sprintf("vm removal: \n%q\n%s", rmvCmd.Args, rmvOut))
-	}()
-
-	assert.Check(t, runErr, fmt.Sprintf("vm run: \n%q\n%s", runCmd.Args, runOut))
-	if runErr != nil {
-		return
-	}
+	i.Run()
+	defer i.Remove()
 
 	// Touch a file in /my-vol
-	touchCmd := exec.Command(
-		igniteBin,
-		"--runtime="+runtime,
-		"--network-plugin="+networkPlugin,
-		"exec", vmName,
-		"touch", "/my-vol/hello-world",
-	)
-	touchOut, touchErr := touchCmd.CombinedOutput()
-	assert.Check(t, touchErr, fmt.Sprintf("touch: \n%q\n%s", touchCmd.Args, touchOut))
-	if touchErr != nil {
-		return
-	}
+	i.Exec("touch", "/my-vol/hello-world")
 
-	// Stop the vm
-	stopCmd := exec.Command(
-		igniteBin,
-		"--runtime="+runtime,
-		"--network-plugin="+networkPlugin,
-		"stop", vmName,
-	)
-	stopOut, stopErr := stopCmd.CombinedOutput()
-	assert.Check(t, stopErr, fmt.Sprintf("vm stop: \n%q\n%s", stopCmd.Args, stopOut))
-	if stopErr != nil {
-		return
-	}
+	// Stop the vm without force.
+	i.Force = false
+	i.Stop()
+	// Restore force to be used by VM remove.
+	i.Force = true
 
 	// Start another vm so we can check my-vol
-	run2Cmd := exec.Command(
-		igniteBin,
-		"--runtime="+runtime,
-		"--network-plugin="+networkPlugin,
-		"--volumes="+loopPath+":/my-vol",
-		"run", "--name="+vmName+"_2",
-		"weaveworks/ignite-ubuntu",
-		"--ssh",
+	i2 := ignite.NewIgnite(
+		ignite.WithTest(t),
+		ignite.WithBinary(igniteBin),
+		ignite.WithVMName(vmName+"_2"),
+		ignite.WithRuntime(runtime),
+		ignite.WithNetworkPlugin(networkPlugin),
+		ignite.WithRunArg("--ssh"),
+		ignite.WithRunArg("--volumes="+loopPath+":/my-vol"),
 	)
-	run2Out, run2Err := run2Cmd.CombinedOutput()
 
-	defer func() {
-		rmv2Cmd := exec.Command(
-			igniteBin,
-			"--runtime="+runtime,
-			"--network-plugin="+networkPlugin,
-			"rm", "-f", vmName+"_2",
-		)
-		rmv2Out, rmv2Err := rmv2Cmd.CombinedOutput()
-		assert.Check(t, rmv2Err, fmt.Sprintf("vm removal: \n%q\n%s", rmv2Cmd.Args, rmv2Out))
-	}()
-
-	assert.Check(t, run2Err, fmt.Sprintf("vm run: \n%q\n%s", run2Cmd.Args, run2Out))
-	if run2Err != nil {
-		return
-	}
+	i2.Run()
+	defer i2.Remove()
 
 	// Stat the file in /my-vol using the new vm
-	stat2Cmd := exec.Command(
-		igniteBin,
-		"--runtime="+runtime,
-		"--network-plugin="+networkPlugin,
-		"exec", vmName+"_2",
-		"stat", "/my-vol/hello-world",
-	)
-	stat2Out, stat2Err := stat2Cmd.CombinedOutput()
-	assert.Check(t, stat2Err, fmt.Sprintf("stat2: \n%q\n%s", stat2Cmd.Args, stat2Out))
+	i2.Exec("stat", "/my-vol/hello-world")
 }
 
 func TestVolumeWithDockerAndDockerBridge(t *testing.T) {

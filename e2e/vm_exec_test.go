@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"gotest.tools/assert"
+
+	"github.com/weaveworks/ignite/e2e/util/ignite"
 )
 
 func TestVMExecInteractive(t *testing.T) {
@@ -14,24 +16,15 @@ func TestVMExecInteractive(t *testing.T) {
 
 	vmName := "e2e_test_ignite_exec_interactive"
 
-	runCmd := exec.Command(
-		igniteBin,
-		"run", "--name="+vmName,
-		"--ssh",
-		"weaveworks/ignite-ubuntu",
+	i := ignite.NewIgnite(
+		ignite.WithTest(t),
+		ignite.WithBinary(igniteBin),
+		ignite.WithVMName(vmName),
+		ignite.WithRunArg("--ssh"),
 	)
-	runOut, runErr := runCmd.CombinedOutput()
 
-	defer func() {
-		rmvCmd := exec.Command(
-			igniteBin,
-			"rm", "-f", vmName,
-		)
-		rmvOut, rmvErr := rmvCmd.CombinedOutput()
-		assert.Check(t, rmvErr, fmt.Sprintf("vm removal: \n%q\n%s", rmvCmd.Args, rmvOut))
-	}()
-
-	assert.Check(t, runErr, fmt.Sprintf("vm run: \n%q\n%s", runCmd.Args, runOut))
+	i.Run()
+	defer i.Remove()
 
 	// Pass input data from host and write to a file inside the VM.
 	remoteFileName := "afile.txt"
@@ -49,12 +42,8 @@ func TestVMExecInteractive(t *testing.T) {
 	assert.Check(t, execErr, fmt.Sprintf("exec: \n%q\n%s", execCmd.Args, execOut))
 
 	// Check the file content inside the VM.
-	catCmd := exec.Command(
-		igniteBin,
-		"exec", vmName,
-		"cat", remoteFileName,
-	)
-	catOut, catErr := catCmd.CombinedOutput()
-	assert.Check(t, catErr, fmt.Sprintf("cat: \n%q\n%s", catCmd.Args, catOut))
+	execArgs := []string{"cat", remoteFileName}
+	catOut, catErr := i.ExecErr(execArgs...)
+	assert.Check(t, catErr, fmt.Sprintf("cat: \n%q\n%s", i.ExecArgs(execArgs...), catOut))
 	assert.Equal(t, string(catOut), inputContent, fmt.Sprintf("unexpected file content on host:\n\t(WNT): %q\n\t(GOT): %q", inputContent, string(catOut)))
 }
