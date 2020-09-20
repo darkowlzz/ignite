@@ -1,0 +1,30 @@
+# Workflow for updating dependencies.
+
+name: deps-update
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    # Run once every day.
+    - cron: '0 0 * * *'
+
+jobs:
+  deps-update:
+    run-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update dependencies and docs
+        run: make autogen && make api-docs
+      - name: Create pull request
+        id: cpr
+        uses: peter-evans/create-pull-request@v3.4.0
+        with:
+          commit-message: [automated] Update dependencies and docs
+          branch: deps-patch
+          base: main
+          delete-branch: true
+          title: [automated] Update dependencies and docs
+      - name: Pull request info
+        run: |
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
