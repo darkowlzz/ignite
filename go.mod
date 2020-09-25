@@ -16,7 +16,7 @@ require (
 	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee
 	github.com/containerd/cgroups v0.0.0-20200407151229-7fc7a507c04c // indirect
 	github.com/containerd/console v1.0.0
-	github.com/containerd/containerd v1.3.3
+	github.com/containerd/containerd v1.4.1
 	github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c // indirect
 	github.com/containerd/go-cni v0.0.0-20200107172653-c154a49e2c75
 	github.com/containerd/go-runc v0.0.0-20200220073739-7016d3ce2328 // indirect
@@ -42,6 +42,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0-rc1
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/opencontainers/runtime-spec v1.0.2
+	github.com/opencontainers/selinux v1.6.0 // indirect
 	github.com/otiai10/copy v1.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.11.0
