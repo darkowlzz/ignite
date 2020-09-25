@@ -8,17 +8,28 @@ on:
         description: GOARCH build environment variable.
         default: amd64
         required: true
+      repository:
+        description: Git repository to checkout for building.
+        default: weaveworks/ignite
+        required: true
+      ref:
+        description: Git branch, tag or SHA to checkout.
+        default: master
+        required: true
 
 jobs:
   build-binaries:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          repository: ${{ github.event.inputs.repository }}
+          ref: ${{ github.event.inputs.ref }}
       - uses: actions/setup-go@v2
         with:
           go-version: '1.14.2'
       - name: Build binaries for ${{ github.event.inputs.GOARCH }}
-        run: make ignite ignite-spawn ignited bin/${{ github.event.inputs.GOARCH }}/Dockerfile GO_MAKE_TARGET=local
+        run: make ignite ignite-spawn ignited bin/${{ github.event.inputs.GOARCH }}/Dockerfile GO_MAKE_TARGET=local GOARCH=${{ github.event.inputs.GOARCH }}
       - uses: actions/upload-artifact@v2
         with:
           name: Upload artifacts
