@@ -1,0 +1,28 @@
+name: Build binaries
+
+on:
+  workflow_dispatch:
+    # Enable manual trigger of this action.
+    inputs:
+      GOARCH:
+        description: GOARCH build environment variable.
+        default: amd64
+        required: true
+
+jobs:
+  build-binaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.14.2'
+      - name: Build binaries for ${{ github.event.inputs.GOARCH }}
+        run: make ignite ignite-spawn ignited bin/${{ github.event.inputs.GOARCH }}/Dockerfile GO_MAKE_TARGET=local
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Upload artifacts
+          path: |
+            bin/${{ github.event.inputs.GOARCH }}/ignite
+            bin/${{ github.event.inputs.GOARCH }}/ignited
+            bin/${{ github.event.inputs.GOARCH }}/ignite-spawn
