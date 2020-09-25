@@ -1,0 +1,24 @@
+name: Update docs
+
+on:
+  workflow_dispatch:
+    # Enable manual trigger of this action.
+
+jobs:
+  update-go-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update docs
+        run: make api-docs IT=0
+      - name: Create pull request
+        id: cpr
+        uses: peter-evans/create-pull-request@v3.4.0
+        with:
+          commit-message: "[automated] Update docs"
+          branch: docs-update-patch
+          delete-branch: true
+          title: "[automated] Update docs"
+      - name: Pull request info
+        run: |
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"

@@ -7,6 +7,12 @@ SHELL:=/bin/bash
 # Set the command for running `docker`
 # -- allows user to override for things like sudo usage or container images 
 DOCKER := docker
+# Docker interactive mode, enabled by default.
+IT ?= 1
+ifeq ($(IT),1)
+	DOCKER_IT=-it
+endif
+
 # Set the first containerd.sock that successfully stats -- fallback to the docker4mac default
 CONTAINERD_SOCK := $(shell \
 	$(DOCKER) run -i --rm \
@@ -99,7 +105,7 @@ local: # Do not use directly -- use $(GO_MAKE_TARGET)
 	$(COMMAND)
 go-in-docker: # Do not use directly -- use $(GO_MAKE_TARGET)
 	mkdir -p $(CACHE_DIR)/go $(CACHE_DIR)/cache
-	$(DOCKER) run -it --rm \
+	$(DOCKER) run $(DOCKER_IT) --rm \
 		-v $(CACHE_DIR)/go:/go \
 		-v $(CACHE_DIR)/cache:/.cache/go-build \
 		-v $(shell pwd):/go/src/${PROJECT} \
@@ -208,7 +214,7 @@ api-doc:
 	mv bin/tmp/${GROUPVERSION}/*.go $(shell pwd)/pkg/apis/${GROUPVERSION}/
 	rm -r bin/tmp/${GROUPVERSION}
 	# Format the docs with pandoc
-	$(DOCKER) run -it --rm \
+	$(DOCKER) run $(DOCKER_IT) --rm \
 		-v $(shell pwd):/data \
 		-u $(shell id -u):$(shell id -g) \
 		pandoc/core \
