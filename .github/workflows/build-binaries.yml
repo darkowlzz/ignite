@@ -17,6 +17,9 @@ on:
         default: master
         required: true
 
+env:
+  GOARCH: ${{ github.event.inputs.GOARCH }}
+
 jobs:
   build-binaries:
     runs-on: ubuntu-latest
@@ -28,12 +31,12 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '1.14.2'
-      - name: Build binaries for ${{ github.event.inputs.GOARCH }}
-        run: make ignite ignite-spawn ignited bin/${{ github.event.inputs.GOARCH }}/Dockerfile GO_MAKE_TARGET=local GOARCH=${{ github.event.inputs.GOARCH }}
+      - name: Build binaries for ${{ env.GOARCH }}
+        run: make ignite ignite-spawn ignited bin/${{ env.GOARCH }}/Dockerfile GO_MAKE_TARGET=local GOARCH=${{ env.GOARCH }}
       - uses: actions/upload-artifact@v2
         with:
           name: Upload artifacts
           path: |
-            bin/${{ github.event.inputs.GOARCH }}/ignite
-            bin/${{ github.event.inputs.GOARCH }}/ignited
-            bin/${{ github.event.inputs.GOARCH }}/ignite-spawn
+            bin/${{ env.GOARCH }}/ignite
+            bin/${{ env.GOARCH }}/ignited
+            bin/${{ env.GOARCH }}/ignite-spawn
