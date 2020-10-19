@@ -23,7 +23,7 @@ jobs:
       - name: Login to container registry
         uses: docker/login-action@v1
         with:
-          registry: docker.io
+          registry: ghcr.io
           username: ${{ secrets.CR_HOST }}
           password: ${{ secrets.CR_PAT }}
       - name: Build ubuntu 18.04 amd64 image
@@ -64,7 +64,7 @@ jobs:
       - name: Login to container registry
         uses: docker/login-action@v1
         with:
-          registry: docker.io
+          registry: ghcr.io
           username: ${{ secrets.CR_HOST }}
           password: ${{ secrets.CR_PAT }}
       - name: Build and push centos 7 image
@@ -86,7 +86,7 @@ jobs:
       - name: Login to container registry
         uses: docker/login-action@v1
         with:
-          registry: docker.io
+          registry: ghcr.io
           username: ${{ secrets.CR_HOST }}
           password: ${{ secrets.CR_PAT }}
       - name: Build image
@@ -101,7 +101,7 @@ jobs:
       - name: Login to container registry
         uses: docker/login-action@v1
         with:
-          registry: docker.io
+          registry: ghcr.io
           username: ${{ secrets.CR_HOST }}
           password: ${{ secrets.CR_PAT }}
       - name: Build opensuse leap image
@@ -123,7 +123,7 @@ jobs:
       - name: Login to container registry
         uses: docker/login-action@v1
         with:
-          registry: docker.io
+          registry: ghcr.io
           username: ${{ secrets.CR_HOST }}
           password: ${{ secrets.CR_PAT }}
       - name: Build kubeadm v1.18.3 amd64 image
@@ -152,7 +152,7 @@ jobs:
   #     - name: Login to container registry
   #       uses: docker/login-action@v1
   #         with:
-  #         registry: docker.io
+  #         registry: ghcr.io
   #         username: ${{ secrets.CR_HOST }}
   #         password: ${{ secrets.CR_PAT }}
   #     - name: Build amd64 image
