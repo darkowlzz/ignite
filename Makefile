@@ -167,7 +167,7 @@ ifneq ($(IS_DIRTY),0)
 endif
 	mkdir -p bin/releases/${GIT_VERSION}
 	cp -r bin/{amd64,arm64} bin/releases/${GIT_VERSION}
-	DOCKER=$(DOCKER) hack/push-manifest-list.sh $(IMAGE):$(IMAGE_TAG) $(GOARCH_LIST)
+	# DOCKER=$(DOCKER) hack/push-manifest-list.sh $(IMAGE):$(IMAGE_TAG) $(GOARCH_LIST)
 
 tidy: /go/bin/goimports
 	go mod tidy
