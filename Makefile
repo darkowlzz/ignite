@@ -99,7 +99,7 @@ local: # Do not use directly -- use $(GO_MAKE_TARGET)
 	$(COMMAND)
 go-in-docker: # Do not use directly -- use $(GO_MAKE_TARGET)
 	mkdir -p $(CACHE_DIR)/go $(CACHE_DIR)/cache
-	$(DOCKER) run -it --rm \
+	$(DOCKER) run --rm \
 		-v $(CACHE_DIR)/go:/go \
 		-v $(CACHE_DIR)/cache:/.cache/go-build \
 		-v $(shell pwd):/go/src/${PROJECT} \
@@ -167,7 +167,7 @@ ifneq ($(IS_DIRTY),0)
 endif
 	mkdir -p bin/releases/${GIT_VERSION}
 	cp -r bin/{amd64,arm64} bin/releases/${GIT_VERSION}
-	DOCKER=$(DOCKER) hack/push-manifest-list.sh $(IMAGE):$(IMAGE_TAG) $(GOARCH_LIST)
+	# DOCKER=$(DOCKER) hack/push-manifest-list.sh $(IMAGE):$(IMAGE_TAG) $(GOARCH_LIST)
 
 tidy: /go/bin/goimports
 	go mod tidy
