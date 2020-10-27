@@ -17,8 +17,9 @@ on:
         default: 5.4.43
         required: true
 
-env:
-  REGISTRY: ghcr.io/darkowlzz
+defaults:
+  run:
+    working-directory: images/kernel
 
 jobs:
   kernel1:
@@ -36,15 +37,12 @@ jobs:
       - name: Build kernel for amd64
         env:
           GOARCH: amd64
-        working-directory: images/kernel
         run: make
       - name: Build kernel for arm64
         env:
           GOARCH: arm64
-        working-directory: images/kernel
         run: make
       - name: Push images
-        working-directory: images/kernel
         run: make push
 
   kernel2:
@@ -62,15 +60,12 @@ jobs:
       - name: Build kernel for amd64
         env:
           GOARCH: amd64
-        working-directory: images/kernel
         run: make
       - name: Build kernel for arm64
         env:
           GOARCH: arm64
-        working-directory: images/kernel
         run: make
       - name: Push images
-        working-directory: images/kernel
         run: make push
 
   kernel3:
@@ -88,13 +83,10 @@ jobs:
       - name: Build kernel for amd64
         env:
           GOARCH: amd64
-        working-directory: images/kernel
         run: make
       - name: Build kernel for arm64
         env:
           GOARCH: arm64
-        working-directory: images/kernel
         run: make
       - name: Push images
-        working-directory: images/kernel
         run: make push
